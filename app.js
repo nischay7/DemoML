@@ -6,28 +6,21 @@ const upload = multer({ dest: 'uploads/' });
 const fs = require('fs');
 
 const { spawn } = require('child_process');
-const pythonProcess = spawn('python', ['python_scripts/predict.py', 'arg1', 'arg2']);
-pythonProcess.stdout.on('data', (data) => {
-    console.log(`Received data from Python script: ${data}`);
-});
-
-pythonProcess.stderr.on('data', (data) => {
-    console.error(`Error received from Python script: ${data}`);
-});
-
-// Listen for the Python process to exit
-pythonProcess.on('close', (code) => {
-    console.log(`Python script exited with code ${code}`);
-});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 
 const fields = [
-    { name: 'name', label: 'Name', type: 'text' },
-    { name: 'email', label: 'Email', type: 'email' },
-    { name: 'message', label: 'Message', type: 'textarea' }
+    { name: 'Pregnancies', label: 'Pregnancies', type: 'text' },
+    { name: 'Glucose', label: 'Glucose', type: 'text' },
+    { name: 'BloodPressure', label: 'BloodPressure', type: 'text' },
+    { name: 'SkinThickness', label: 'SkinThickness', type: 'text' },
+    { name: 'Insulin', label: 'Insulin', type: 'text' },
+    { name: 'BMI', label: 'BMI', type: 'text' },
+    { name: 'DiabetesPedigreeFunction', label: 'BloodPresDiabetesPedigreeFunctionsure', type: 'text' },    
+    { name: 'Age', label: 'Age', type: 'text' }
+
 ];
 
 app.get('/', function(req,res){
@@ -36,7 +29,19 @@ app.get('/', function(req,res){
 })
 
 app.post('/', function(req,res){
-    
+    const pythonProcess = spawn('python3', ['python_scripts/predict.py','models/diabetes_model.joblib', JSON.stringify(req.body), '']);
+    pythonProcess.stdout.on('data', (data) => {
+        console.log(`Received data from Python script: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`Error received from Python script: ${data}`);
+    });
+
+    // Listen for the Python process to exit
+    pythonProcess.on('close', (code) => {
+        console.log(`Python script exited with code ${code}`);
+    });
     console.log(req.body);
     res.render('index', {fields});
 })
