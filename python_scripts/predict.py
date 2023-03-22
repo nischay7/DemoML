@@ -5,31 +5,36 @@ import pandas as pd
 import sys
 import numpy as np
 import json
+from sklearn.metrics import accuracy_score
 
-RESULTS_DIR = 'results/results.csv'
+MODEL_DIR = "models/"
+SCALER_DIR = "scaler/"
+RESULTS_DIR = 'results/'
 
-def predict(path: str, datapoint: dict=None, file=None) -> str:
+def predict(application: str, datapoint: dict=None, file=None) -> str:
     if datapoint is None and file is None:
         raise Exception("Either provide datapoint or csv file")
-    model = joblib.load(path)
+    model_path = MODEL_DIR + application + "_model.joblib"
+    scaler_path = SCALER_DIR + application + "_scaler.joblib"
+    model = joblib.load(model_path)
+    scaler = joblib.load(scaler_path)
     
     if file:
         data = pd.read_csv(file)
-        columns = data.iloc[0,:]
-        X = data.iloc[1:,:]
+        X = data.drop(columns = 'Outcome', axis=1)
     else:
         X = np.array(list(datapoint.values()))
         X = np.reshape(X, (1,len(X)))
-
+    
+    X = scaler.transform(X)
     out = model.predict(X)
-
-    if type(out) == list:
-        out = np.array(out)
-        out = np.reshape(out, (len(out),1))
-        out.tofile(RESULTS_DIR, sep=',')
-        return RESULTS_DIR
+    out = np.reshape(out, (len(out),1))
+    if len(out) >1:
+        result_path = RESULTS_DIR+application+"_result.csv"
+        out.tofile(result_path, sep=',')
+        return result_path
     else:
-        return "positive" if out.tolist()[0] else "negative"
+        return "positive" if out[0][0] else "negative"
 
 
 if __name__ == "__main__":

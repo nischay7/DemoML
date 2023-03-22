@@ -29,7 +29,7 @@ app.get('/', function(req,res){
 })
 
 app.post('/', function(req,res){
-    const pythonProcess = spawn('python3', ['python_scripts/predict.py','models/diabetes_model.joblib', JSON.stringify(req.body), '']);
+    const pythonProcess = spawn('python3', ['python_scripts/predict.py','diabetes', JSON.stringify(req.body), '']);
     pythonProcess.stdout.on('data', (data) => {
         console.log(`Received data from Python script: ${data}`);
     });
