@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score
 
 MODEL_DIR = "models/"
 SCALER_DIR = "scaler/"
-RESULTS_DIR = 'results/'
+RESULTS_DIR = "results/"
 
 def predict(application: str, datapoint: dict=None, file=None) -> str:
     if datapoint is None and file is None:
