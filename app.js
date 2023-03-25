@@ -2,6 +2,8 @@ var express = require('express');
 var bodyParser  = require('body-parser');
 var app = express();
 const multer = require('multer');
+const path = require('path');
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -15,10 +17,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 const fs = require('fs');
 
-const { spawn } = require('child_process');
+const { spawnSync } = require('child_process');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 
 var fields = [
@@ -50,36 +53,48 @@ app.post('/', upload.single('file'), function(req,res){
         file_path = ''
         console.log("No file uploaded")
     }
-    const pythonProcess = spawn('python3', ['python_scripts/predict.py', Application, JSON.stringify(req.body), file_path]);
-    pythonProcess.stdout.on('data', (data) => {
-        console.log(`Received data from Python script: ${data}`);
-    });
+    const pythonProcess = spawnSync('python3', ['python_scripts/predict.py', Application, JSON.stringify(req.body), file_path]);
+    console.log(pythonProcess.stdout.toString())
+    // pythonProcess.stdout.on('data', (data) => {
+    //     console.log(`Received data from Python script: ${data}`);
+    // });
 
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Error received from Python script: ${data}`);
-    });
+    // pythonProcess.stderr.on('data', (data) => {
+    //     console.error(`Error received from Python script: ${data}`);
+    // });
 
     // Listen for the Python process to exit
-    pythonProcess.on('close', (code) => {
-        console.log(`Python script exited with code ${code}`);
-    });
+    // pythonProcess.on('close', (code) => {
+    //     console.log(`Python script exited with code ${code}`);
+    // });
+    
     console.log(req.body);
 
-    res.render('index', {fields});
-})
-
-app.post('/upload', upload.single('file'), function(req,res){
-    console.log(req.file);
-    console.log(req.file.path)
-    if (!req.file || !req.file.path) {
-        // handle error here
-        res.status(400).send('No file uploaded');
-        return;
+    
+    // console.log(pythonProcess.stdout.toString())
+    if (req.file){
+        // var result = fs.readFileSync('results/'+Application+'_result.csv');
+        // res.send(result)
+        res.download(pythonProcess.stdout.toString().replace(/(\r\n|\n|\r)/gm, ''));
     }
-
-    var buffer = fs.readFileSync(req.file.path);
-    res.send(buffer)
+    else {
+        res.render('results', {out : pythonProcess.stdout.toString()});
+    }
+    // res.render('index', {fields});
 })
+
+// app.post('/upload', upload.single('file'), function(req,res){
+//     console.log(req.file);
+//     console.log(req.file.path)
+//     if (!req.file || !req.file.path) {
+//         // handle error here
+//         res.status(400).send('No file uploaded');
+//         return;
+//     }
+
+//     var buffer = fs.readFileSync(req.file.path);
+//     res.send(buffer)
+// })
 
 
 app.listen(3300,function(){
